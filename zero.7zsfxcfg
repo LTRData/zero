@@ -1,0 +1,6 @@
+;!@Install@!UTF-8!
+Title="Zero And Random Device Driver"
+BeginPrompt="Do you want to install the Zero And Random Device Driver?"
+ExecuteFile="run64.exe"
+ExecuteParameters="cmd /c install.cmd"
+;!@InstallEnd@!
