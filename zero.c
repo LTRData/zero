@@ -4,17 +4,33 @@ NTKERNELAPI
 ULONG
 RtlRandom(IN OUT PULONG Seed);
 
+#ifdef _WIN64
+
+NTKERNELAPI
+ULONG
+RtlRandomEx(IN OUT PULONG Seed);
+
+#define RtlRandom RtlRandomEx
+
+#endif
+
 PVOID
 MmGetSystemAddressForMdlPrettySafe(PMDL Mdl)
 {
   CSHORT MdlMappingCanFail;
   PVOID MappedSystemVa;
 
+  if (Mdl == NULL)
+    return NULL;
+
+  if (Mdl->MdlFlags & (MDL_MAPPED_TO_SYSTEM_VA | MDL_SOURCE_IS_NONPAGED_POOL))
+    return Mdl->MappedSystemVa;
+
   MdlMappingCanFail = Mdl->MdlFlags & MDL_MAPPING_CAN_FAIL;
 
   Mdl->MdlFlags |= MDL_MAPPING_CAN_FAIL;
 
-  MappedSystemVa = MmGetSystemAddressForMdl(Mdl);
+  MappedSystemVa = MmMapLockedPages(Mdl, KernelMode);
 
   if (MdlMappingCanFail == 0)
     Mdl->MdlFlags &= ~MDL_MAPPING_CAN_FAIL;
@@ -152,9 +168,7 @@ ZeroDispatchRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
       return STATUS_INSUFFICIENT_RESOURCES;
     }
 
-  if (DeviceObject == ZeroDev)
-    RtlZeroMemory(system_buffer, io_stack->Parameters.Read.Length);
-  else if (DeviceObject == RandomDev)
+  if (DeviceObject == RandomDev)
     {
       PULONG idx = (PULONG) system_buffer;
 
@@ -164,6 +178,8 @@ ZeroDispatchRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 	   idx += 1)
 	*idx = RtlRandom(&DriverLoadSystemTime.LowPart);
     }
+  else // if (DeviceObject == ZeroDev)
+    RtlZeroMemory(system_buffer, io_stack->Parameters.Read.Length);
 
   Irp->IoStatus.Status = STATUS_SUCCESS;
   Irp->IoStatus.Information = io_stack->Parameters.Read.Length;
@@ -265,6 +281,7 @@ ZeroDispatchSetInformation(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
     case FileEndOfFileInformation:
     case FileAllocationInformation:
       status = STATUS_SUCCESS;
+      break;
 
     default:
       status = STATUS_INVALID_DEVICE_REQUEST;
