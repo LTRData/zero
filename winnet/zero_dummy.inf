@@ -7,7 +7,7 @@ signature = "$Windows NT$"
 Class = SCSIAdapter
 ClassGUID = {4D36E97B-E325-11CE-BFC1-08002BE10318}
 Provider = "LTR Data"
-DriverVer=04/26/2018,17.49.52.789
+DriverVer = 08/28/2021,19.30.47.481
 CatalogFile = zero_dummy.cat
 
 
@@ -16,19 +16,13 @@ CatalogFile = zero_dummy.cat
 
 
 [SourceDisksFiles.x86]
-zero.sys = 1, x86
+zero.sys = 1, i386
 
 [SourceDisksFiles.ia64]
 zero.sys = 1, ia64
 
 [SourceDisksFiles.amd64]
-zero.sys = 1, x64
-
-[SourceDisksFiles.arm]
-zero.sys = 1, arm
-
-[SourceDisksFiles.arm64]
-zero.sys = 1, arm64
+zero.sys = 1, amd64
 
 [DestinationDirs]
 zeroSysFiles = 12

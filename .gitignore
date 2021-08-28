@@ -354,10 +354,14 @@ MigrationBackup/
 *.sys
 *.zip
 *.cat
-*.cab
+cab/
 *.dll
 *.exe
 *.mac
 *.bin
 upd*.cmd
 *.7z
+*.wrn
+*.sfx
+*.res
+obj*_*_*

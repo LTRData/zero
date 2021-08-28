@@ -8,8 +8,8 @@
 //
 
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 1,0,1,2
-PRODUCTVERSION 1,0,1,2
+FILEVERSION 1,1,0,3
+PRODUCTVERSION 1,1,0,3
 FILEFLAGSMASK  VS_FFI_FILEFLAGSMASK
 #ifndef DEBUG
   FILEFLAGS    0
@@ -26,12 +26,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Olof Lagerkvist\0"
             VALUE "FileDescription", "Zero and Random Device Driver\0"
-            VALUE "FileVersion", "1.0.1.2\0"
+            VALUE "FileVersion", "1.1.0.3\0"
             VALUE "InternalName", "zero\0"
-            VALUE "LegalCopyright", "Copyright © 2005-2012 Olof Lagerkvist.\0"
+            VALUE "LegalCopyright", "Copyright © 2005-2021 Olof Lagerkvist, LTR Data.\0"
             VALUE "OriginalFilename", "zero.sys\0"
             VALUE "ProductName", "zero\0"
-            VALUE "ProductVersion", "1.0.1.2\0"
+            VALUE "ProductVersion", "1.1.0.3\0"
         END
     END
     BLOCK "VarFileInfo"

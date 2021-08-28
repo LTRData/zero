@@ -1,19 +1,31 @@
 #include <ntddk.h>
 #include <ntintsafe.h>
 
+#ifdef _M_IA64
+EXTERN_C
+#endif
+NTKERNELAPI
+int
+SystemPrng(
+    OUT PUCHAR RandomBuffer,
+    UINT_PTR RandomBufferLength
+);
+
+EXTERN_C
 NTKERNELAPI
 ULONG
 RtlRandom(IN OUT PULONG Seed);
 
-#ifdef _WIN64
-
+EXTERN_C
 NTKERNELAPI
 ULONG
 RtlRandomEx(IN OUT PULONG Seed);
 
-#define RtlRandom RtlRandomEx
+PDEVICE_OBJECT ZeroDev;
+PDEVICE_OBJECT RandomDev;
+LARGE_INTEGER DriverLoadSystemTime;
 
-#endif
+#if !defined(NTDDI_WINXP) || NTDDI_VERSION < NTDDI_WINXP
 
 PVOID
 MmGetSystemAddressForMdlPrettySafe(PMDL Mdl)
@@ -39,8 +51,48 @@ MmGetSystemAddressForMdlPrettySafe(PMDL Mdl)
     return MappedSystemVa;
 }
 
+#ifdef MmGetSystemAddressForMdlSafe
+#undef MmGetSystemAddressForMdlSafe
+#endif
+#define MmGetSystemAddressForMdlSafe(Mdl, Priority) MmGetSystemAddressForMdlPrettySafe((Mdl))
+#ifdef RtlRandomEx
+#undef RtlRandomEx
+#endif
+#define RtlRandomEx RtlRandom
+
+#endif
+
+#if !defined(NTDDI_VISTA) || NTDDI_VERSION < NTDDI_VISTA
+
+void
+FillRandom(PUCHAR buffer, SIZE_T size)
+{
+    PUCHAR ptr = buffer;
+
+    for (;
+        ptr <= buffer + size - sizeof(USHORT);
+        ptr += sizeof(USHORT))
+    {
+        ULONG rnd = RtlRandomEx(&DriverLoadSystemTime.LowPart);
+        *(PUSHORT)ptr = HIWORD(rnd) ^ LOWORD(rnd);
+    }
+
+    for (;
+        ptr < buffer + size;
+        ptr++)
+    {
+        ULONG rnd = RtlRandomEx(&DriverLoadSystemTime.LowPart);
+        *ptr = (UCHAR)(HIWORD(rnd) ^ LOWORD(rnd));
+    }
+}
+
+#define SystemPrng(buffer, size) FillRandom(buffer, size)
+
+#endif
+
 ///////
 
+EXTERN_C
 NTSTATUS
 DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 
@@ -62,10 +114,6 @@ ZeroDispatchSetInformation(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp);
 VOID
 ZeroUnload(IN PDRIVER_OBJECT DriverObject);
 
-PDEVICE_OBJECT ZeroDev;
-PDEVICE_OBJECT RandomDev;
-LARGE_INTEGER DriverLoadSystemTime;
-
 #pragma code_seg("INIT")
 
 NTSTATUS
@@ -75,6 +123,8 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject,
     NTSTATUS status;
     UNICODE_STRING device_name;
     UNICODE_STRING link_name;
+
+    UNREFERENCED_PARAMETER(RegistryPath);
 
     KeQuerySystemTime(&DriverLoadSystemTime);
 
@@ -101,7 +151,7 @@ DriverEntry(IN PDRIVER_OBJECT DriverObject,
     else
         RandomDev->Flags |= DO_DIRECT_IO;
 
-    if ((ZeroDev == NULL) & (RandomDev == NULL))
+    if ((ZeroDev == NULL) && (RandomDev == NULL))
         return status;
 
     RtlInitUnicodeString(&link_name, L"\\DosDevices\\Random");
@@ -145,6 +195,8 @@ ZeroUnload(IN PDRIVER_OBJECT DriverObject)
 NTSTATUS
 ZeroDispatchCreateClose(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+    UNREFERENCED_PARAMETER(DeviceObject);
+
     Irp->IoStatus.Status = STATUS_SUCCESS;
     Irp->IoStatus.Information = 0;
 
@@ -157,7 +209,7 @@ NTSTATUS
 ZeroDispatchRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     PIO_STACK_LOCATION io_stack = IoGetCurrentIrpStackLocation(Irp);
-    PUCHAR system_buffer = MmGetSystemAddressForMdlPrettySafe(Irp->MdlAddress);
+    PVOID system_buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, LowPagePriority);
 
     if (system_buffer == NULL)
     {
@@ -171,27 +223,12 @@ ZeroDispatchRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 
     if (DeviceObject == RandomDev)
     {
-        PUCHAR ptr = system_buffer;
-
-        for (;
-        ptr <= system_buffer + io_stack->Parameters.Read.Length -
-            sizeof(USHORT);
-            ptr += sizeof(USHORT))
-        {
-            ULONG rnd = RtlRandom(&DriverLoadSystemTime.LowPart);
-            *(PUSHORT)ptr = HIWORD(rnd) ^ LOWORD(rnd);
-        }
-
-        for (;
-        ptr < system_buffer + io_stack->Parameters.Read.Length;
-            ptr++)
-        {
-            ULONG rnd = RtlRandom(&DriverLoadSystemTime.LowPart);
-            *ptr = (UCHAR)(HIWORD(rnd) ^ LOWORD(rnd));
-        }
+        SystemPrng((PUCHAR)system_buffer, io_stack->Parameters.Read.Length);
     }
     else // if (DeviceObject == ZeroDev)
+    {
         RtlZeroMemory(system_buffer, io_stack->Parameters.Read.Length);
+    }
 
     Irp->IoStatus.Status = STATUS_SUCCESS;
     Irp->IoStatus.Information = io_stack->Parameters.Read.Length;
@@ -204,6 +241,8 @@ ZeroDispatchRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 NTSTATUS
 ZeroDispatchWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+    UNREFERENCED_PARAMETER(DeviceObject);
+
     PIO_STACK_LOCATION io_stack;
 
     io_stack = IoGetCurrentIrpStackLocation(Irp);
@@ -219,6 +258,8 @@ ZeroDispatchWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 NTSTATUS
 ZeroDispatchQueryInformation(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+    UNREFERENCED_PARAMETER(DeviceObject);
+
     PIO_STACK_LOCATION io_stack = IoGetCurrentIrpStackLocation(Irp);
     NTSTATUS status;
 
@@ -285,6 +326,8 @@ ZeroDispatchQueryInformation(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 NTSTATUS
 ZeroDispatchSetInformation(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
+    UNREFERENCED_PARAMETER(DeviceObject);
+
     PIO_STACK_LOCATION io_stack = IoGetCurrentIrpStackLocation(Irp);
     NTSTATUS status;
 
