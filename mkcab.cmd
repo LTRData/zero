@@ -8,6 +8,6 @@ inf2cat /driver:win7 /os:XP_X86,2000,XP_X64,Vista_X86,Vista_X64,7_X86,7_X64,Serv
 
 if exist cab\zero.cab del cab\zero.cab
 
-cabarc -p -r n cab\zero.cab win2k\* winnet\* win7\* || goto :eof
+cabarc -p -r n cab\zero.cab win2k\zero_dummy.inf win2k\*.sys win2k\*.pdb winnet\zero_dummy.inf winnet\*.sys winnet\*.pdb win7\zero_dummy.inf win7\*.sys win7\*.pdb || goto :eof
 
 signtool sign /a /v /n "Lagerkvist Teknisk R†dgivning i Bor†s HB" /d "Zero and Random device driver" /du "http://ltr-data.se" /ac "z:\kod\cert\GlobalSign Root CA.crt" /tr "http://sha256timestamp.ws.symantec.com/sha256/timestamp" cab\zero.cab || goto :eof
