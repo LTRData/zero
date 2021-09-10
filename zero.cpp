@@ -209,6 +209,18 @@ NTSTATUS
 ZeroDispatchRead(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     PIO_STACK_LOCATION io_stack = IoGetCurrentIrpStackLocation(Irp);
+
+    if (io_stack->Parameters.Read.Length == 0 ||
+        Irp->MdlAddress == NULL)
+    {
+        Irp->IoStatus.Status = STATUS_SUCCESS;
+        Irp->IoStatus.Information = 0;
+
+        IoCompleteRequest(Irp, IO_DISK_INCREMENT);
+
+        return STATUS_SUCCESS;
+    }
+
     PVOID system_buffer = MmGetSystemAddressForMdlSafe(Irp->MdlAddress, LowPagePriority);
 
     if (system_buffer == NULL)
@@ -243,9 +255,7 @@ ZeroDispatchWrite(IN PDEVICE_OBJECT DeviceObject, IN PIRP Irp)
 {
     UNREFERENCED_PARAMETER(DeviceObject);
 
-    PIO_STACK_LOCATION io_stack;
-
-    io_stack = IoGetCurrentIrpStackLocation(Irp);
+    PIO_STACK_LOCATION io_stack = IoGetCurrentIrpStackLocation(Irp);
 
     Irp->IoStatus.Status = STATUS_SUCCESS;
     Irp->IoStatus.Information = io_stack->Parameters.Write.Length;

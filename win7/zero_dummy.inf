@@ -7,7 +7,7 @@ signature = "$Windows NT$"
 Class = SCSIAdapter
 ClassGUID = {4D36E97B-E325-11CE-BFC1-08002BE10318}
 Provider = "LTR Data"
-DriverVer = 08/28/2021,19.48.58.611
+DriverVer = 09/10/2021,23.15.17.870
 CatalogFile = zero_dummy.cat
 
 
