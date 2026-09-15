@@ -43,6 +43,8 @@ Installation requires administrative access and a driver package suitable for th
 
 [mkcab.cmd](mkcab.cmd) contains the historical catalog/CAB packaging and signing workflow. Its certificate paths and timestamp settings require adaptation to the build environment.
 
-## Copyright
+## License
 
-The [version resource](zero.rc) records copyright © 2005–2021 Olof Lagerkvist, LTR Data. This repository currently contains no explicit license file.
+Licensed under the [MIT License](LICENSE).
+
+Copyright © 2005–2021 Olof Lagerkvist, LTR Data.
