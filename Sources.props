@@ -4,7 +4,7 @@
     <TARGETNAME Condition="'$(OVERRIDE_TARGETNAME)'!='true'">zero</TARGETNAME>
     <TARGETPATH Condition="'$(OVERRIDE_TARGETPATH)'!='true'">.</TARGETPATH>
     <TARGETTYPE Condition="'$(OVERRIDE_TARGETTYPE)'!='true'">DRIVER</TARGETTYPE>
-    <SOURCES Condition="'$(OVERRIDE_SOURCES)'!='true'">zero.c zero.rc</SOURCES>
+    <SOURCES Condition="'$(OVERRIDE_SOURCES)'!='true'">zero.cpp zero.rc</SOURCES>
     <MSC_WARNING_LEVEL Condition="'$(OVERRIDE_MSC_WARNING_LEVEL)'!='true'">/W4 /WX /wd4201 /wd4100</MSC_WARNING_LEVEL>
     <MSC_OPTIMIZATION Condition="'$(OVERRIDE_MSC_OPTIMIZATION)'!='true'">/Ox /GF</MSC_OPTIMIZATION>
   </PropertyGroup>
