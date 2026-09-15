@@ -39,8 +39,6 @@ For builds targeting Vista or later, the random device calls `SystemPrng` throug
 
 Open [zero.sln](zero.sln) with Visual C++ and the Windows Driver Kit installed. [zero.vcxproj](zero.vcxproj) selects Windows SDK 10.0.17763.0 and the `WindowsKernelModeDriver10.0` toolset, with Debug/Release configurations for Win32, x64, ARM and ARM64. It builds `zero.cpp` and links `ksecdd.lib`. These are historical project settings, not a current Windows compatibility matrix.
 
-The older [Sources](Sources) and [Sources.props](Sources.props) files still refer to `zero.c`, which is absent from this checkout. They need adjustment before use with the legacy DDK build path.
-
 Installation requires administrative access and a driver package suitable for the target Windows version, architecture and signing requirements. [install.cmd](install.cmd) installs and starts the `zero` service, selecting an INF under `win2k/`, `winnet/` or `win7/`. It expects staged driver binaries and an external `w32verc.exe`; the package recipe also expects `run64.exe`. These binaries are not included in this source checkout.
 
 [mkcab.cmd](mkcab.cmd) contains the historical catalog/CAB packaging and signing workflow. Its certificate paths and timestamp settings require adaptation to the build environment.
